@@ -18,11 +18,15 @@ Exports metrics from Gonka blockchain node and ML admin API for Prometheus.
 
 ## Deployment
 
-### Build and run:
-
+### Clone and build:
 ```bash
-cd ~/gonka-exporter
+git clone https://github.com/votkon/gonka-exporter-prometheus.git
+cd gonka-exporter-prometheus
 docker build -t gonka-exporter .
+```
+
+### Run:
+```bash
 docker run -d \
   --name gonka-exporter \
   --network host \
@@ -31,21 +35,18 @@ docker run -d \
 ```
 
 ### Open firewall for Prometheus server:
-
 ```bash
 sudo ufw allow from YOUR.PROMETHEUS.SERVER.IP to any port 9401
 ```
 
 ### Test:
-
 ```bash
 curl http://localhost:9401/metrics
 ```
 
 ## Update
-
 ```bash
-cd ~/gonka-exporter
+cd ~/gonka-exporter-prometheus
 git pull
 docker stop gonka-exporter && docker rm gonka-exporter
 docker build -t gonka-exporter .
@@ -59,11 +60,9 @@ docker run -d \
 ## Prometheus Config
 
 Add to `prometheus.yml`:
-
 ```yaml
   - job_name: 'gonka'
     static_configs:
       - targets:
-          - '1.1.1.1:9401'  
-
+          - '1.1.1.1:9401'
 ```
