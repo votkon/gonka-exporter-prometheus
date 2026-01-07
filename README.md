@@ -328,15 +328,6 @@ All configuration is done via environment variables:
 | `EXPORTER_PORT` | Port to expose Prometheus metrics | `9401` | No |
 | `REFRESH_INTERVAL` | Seconds between metric updates | `30` | No |
 
-### Finding Your Participant Address
-```bash
-# If you're using the inferenced CLI
-./inferenced keys list
-
-# Or check your validator info
-curl http://localhost:8000/v1/epochs/current/participants | jq '.active_participants.participants[] | select(.seed.participant | contains("YOUR_MONIKER"))'
-```
-
 ---
 
 ## Prometheus Configuration
