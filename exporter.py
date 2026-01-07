@@ -62,6 +62,12 @@ POC_STATUS_MAP = {
 # =============================================================================
 # PROMETHEUS METRICS - ORIGINAL (BACKWARD COMPATIBLE)
 # =============================================================================
+# Add this new metric in the PROMETHEUS METRICS section (around line 70):
+
+BLOCK_HEIGHT_MAX = Gauge(
+    "gonka_block_height_max",
+    "Maximum block height from 3 public Gonka nodes (network monitoring only)"
+)
 
 BLOCK_HEIGHT = Gauge(
     "gonka_block_height",
@@ -423,16 +429,17 @@ def update_tendermint_metrics():
     Update basic Tendermint blockchain metrics.
     
     If EXPORT_NETWORK_METRICS is enabled:
-        - Fetches block height from 3 nodes and takes maximum for reliability
+        - Fetches block height from 3 nodes and exports as gonka_block_height_max
+        - Also fetches local block height and exports as gonka_block_height
     Otherwise:
-        - Uses local Tendermint RPC
+        - Uses local Tendermint RPC for gonka_block_height
     """
     if EXPORT_NETWORK_METRICS:
         # Network monitoring mode: check multiple nodes for max block height
         result = fetch_max_block_height_from_nodes()
         if result:
             max_height, latest_time = result
-            BLOCK_HEIGHT.set(max_height)
+            BLOCK_HEIGHT_MAX.set(max_height)  # Export as separate metric
             
             if latest_time:
                 try:
@@ -443,7 +450,22 @@ def update_tendermint_metrics():
         else:
             print("[WARN] Failed to fetch block height from all nodes")
         
-        # Also fetch enhanced metrics from first available node
+        # Also fetch LOCAL node's block height
+        local_status = fetch_tendermint_status()
+        if local_status:
+            sync_info = local_status.get("sync_info", {})
+            
+            local_height = sync_info.get("latest_block_height")
+            if local_height:
+                try:
+                    BLOCK_HEIGHT.set(int(local_height))
+                except Exception as exc:
+                    print(f"[ERROR] Failed to parse local block height: {exc}")
+            
+            catching_up = sync_info.get("catching_up", False)
+            CATCHING_UP.set(1 if catching_up else 0)
+        
+        # Also fetch enhanced metrics from first available public node
         for node_url in BLOCK_HEIGHT_NODES:
             status = fetch_chain_status_from_node(node_url)
             if status:
@@ -463,9 +485,6 @@ def update_tendermint_metrics():
                         EARLIEST_BLOCK_TIME.set(dt.timestamp())
                     except Exception:
                         pass
-                
-                catching_up = sync_info.get("catching_up", False)
-                CATCHING_UP.set(1 if catching_up else 0)
                 
                 break  # Got data from one node, that's enough
     else:
@@ -511,7 +530,6 @@ def update_tendermint_metrics():
         
         catching_up = sync_info.get("catching_up", False)
         CATCHING_UP.set(1 if catching_up else 0)
-
 
 def update_network_metrics():
     """
