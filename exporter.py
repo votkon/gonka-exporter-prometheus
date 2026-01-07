@@ -22,6 +22,13 @@ BLOCK_HEIGHT_NODES = [
     "http://node1.gonka.ai:8000",
     "http://node2.gonka.ai:8000",
     "http://node3.gonka.ai:8000",
+    "http://185.216.21.98:8000",
+    "http://36.189.234.197:18026",
+    "http://36.189.234.237:17241",
+    "http://47.236.26.199:8000",
+    "http://47.236.19.22:18000",
+    "http://gonka.spv.re:8000",
+    "http://localhost:8000"
 ]
 
 # Feature flags
@@ -281,7 +288,7 @@ def fetch_chain_status_from_node(node_url: str) -> Optional[Dict[str, Any]]:
     """
     url = f"{node_url}{CHAIN_STATUS_ENDPOINT}"
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=5)
         response.raise_for_status()
         data = response.json()
         return data.get("result", {})
