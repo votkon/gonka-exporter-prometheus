@@ -2,6 +2,7 @@ import os
 import time
 import json
 import requests
+import random
 from prometheus_client import start_http_server, Gauge
 from typing import List, Dict, Any, Tuple, Optional
 from datetime import datetime, timezone
@@ -28,7 +29,6 @@ BLOCK_HEIGHT_NODES = [
     "http://47.236.26.199:8000",
     "http://47.236.19.22:18000",
     "http://gonka.spv.re:8000",
-    "http://localhost:8000"
 ]
 
 # Feature flags
@@ -299,14 +299,21 @@ def fetch_chain_status_from_node(node_url: str) -> Optional[Dict[str, Any]]:
 
 def fetch_max_block_height_from_nodes() -> Optional[Tuple[int, str]]:
     """
-    Fetch block height from multiple nodes and return the maximum.
+    Fetch block height from localhost + 5 random external nodes and return the maximum.
     Returns (max_height, latest_time) or None if all nodes fail.
     """
     max_height = None
     latest_time = None
     
-    for node_url in BLOCK_HEIGHT_NODES:
-        status = fetch_chain_status_from_node(node_url)
+    # Always include localhost
+    nodes_to_check = ["http://localhost:8000"]
+    
+    # Add 5 random nodes from the external list
+    selected_external = random.sample(BLOCK_HEIGHT_NODES, min(5, len(BLOCK_HEIGHT_NODES)))
+    nodes_to_check.extend(selected_external)
+    
+    for node_url in nodes_to_check:
+        status = fetch_chain_status_from_node(node_url, timeout=2)
         if not status:
             continue
         
@@ -327,7 +334,6 @@ def fetch_max_block_height_from_nodes() -> Optional[Tuple[int, str]]:
         return max_height, latest_time
     
     return None
-
 
 def fetch_participants() -> Optional[Dict[str, Any]]:
     """
