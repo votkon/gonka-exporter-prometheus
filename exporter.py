@@ -319,7 +319,7 @@ def fetch_max_block_height_from_nodes() -> Optional[Tuple[int, str]]:
     nodes_to_check.extend(selected_external)
     
     for node_url in nodes_to_check:
-        status = fetch_chain_status_from_node(node_url, timeout=2)
+        status = fetch_chain_status_from_node(node_url)
         if not status:
             continue
         
