@@ -127,6 +127,7 @@ This exporter supports two deployment modes:
 | `gonka_node_poc_weight` | PoC weight for this node | `node_id`, `host`, `model` | Admin API `/nodes` |
 | `gonka_node_poc_current_status` | Current PoC status (0-2, see enum below) | `node_id`, `host` | Admin API `/nodes` |
 | `gonka_node_poc_intended_status` | Intended PoC status | `node_id`, `host` | Admin API `/nodes` |
+| `gonka_node_poc_timeslot_assigned` | Whether node was chosen to serve inferences during PoC (1=assigned, 0=not assigned) | `node_id`, `host`, `model` | Admin API `/nodes` |
 | `gonka_node_gpu_device_count` | Number of GPU devices | `node_id`, `host` | Node GPU API |
 | `gonka_node_gpu_avg_utilization_percent` | Average GPU utilization % | `node_id`, `host` | Node GPU API |
 
@@ -519,6 +520,12 @@ gonka_node_status
 
 # Status drift detection (current != intended)
 gonka_node_status != gonka_node_intended_status
+
+# Nodes assigned to serve inferences during PoC
+gonka_node_poc_timeslot_assigned == 1
+
+# Count of nodes serving inferences per model
+sum by (model) (gonka_node_poc_timeslot_assigned)
 ```
 
 ### Network Economics

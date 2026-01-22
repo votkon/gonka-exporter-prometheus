@@ -242,6 +242,12 @@ NODE_GPU_AVG_UTILIZATION = Gauge(
     ["node_id", "host"]
 )
 
+NODE_POC_TIMESLOT_ASSIGNED = Gauge(
+    "gonka_node_poc_timeslot_assigned",
+    "Whether node was chosen to serve inferences during PoC (1=assigned, 0=not assigned)",
+    ["node_id", "host", "model"]
+)
+
 # =============================================================================
 # PROMETHEUS METRICS - ENHANCED CHAIN METRICS
 # =============================================================================
@@ -768,7 +774,7 @@ def update_node_metrics():
             poc_intended_value = POC_STATUS_MAP.get(poc_intended, 0)
             NODE_POC_INTENDED_STATUS.labels(node_id=node_id, host=node_host).set(poc_intended_value)
         
-        # PoC weight per model
+        # PoC weight per model and timeslot allocation
         epoch_ml_nodes = state.get("epoch_ml_nodes", {})
         for model, model_data in epoch_ml_nodes.items():
             if isinstance(model_data, dict):
@@ -779,7 +785,17 @@ def update_node_metrics():
                         host=node_host,
                         model=model
                     ).set(poc_weight)
-        
+
+                # Timeslot allocation - second boolean indicates if node serves inferences during PoC
+                timeslot_allocation = model_data.get("timeslot_allocation", [])
+                if isinstance(timeslot_allocation, list) and len(timeslot_allocation) >= 2:
+                    poc_assigned = timeslot_allocation[1]
+                    NODE_POC_TIMESLOT_ASSIGNED.labels(
+                        node_id=node_id,
+                        host=node_host,
+                        model=model
+                    ).set(1 if poc_assigned else 0)
+
         # GPU stats
         if node_port and node_host:
             gpu_count, gpu_avg_util = fetch_gpu_stats(node_host, node_port)
